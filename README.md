@@ -1,5 +1,5 @@
 # PHAEducation
-This is a Escape Room game to learn pharmacology. 
+This is an escape room game to learn pharmacology. 
 At the end of the game, the learners should be able to:
     1.    Define and differentiate agonist and antagonist
     2.    Match a target protein to an appropriate drug and therapeutic indication
