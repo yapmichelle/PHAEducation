@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>PHARMA ESCAPE ROOM - Educational Pharmacology Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        :root {
+            --primary: #00d9ff;
+            --secondary: #ff006e;
+            --tertiary: #9d4edd;
+            --success: #3a86ff;
+            --warning: #fb5607;
+            --dark-bg: #0a0e27;
+            --card-bg: #1a1f3a;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --accent: #00f5ff;
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background: linear-gradient(135deg, var(--dark-bg) 0%, #1a0a2e 100%);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+            background-attachment: fixed;
+        }
+
+        /* Animated background grid */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(0deg, transparent 24%, rgba(0, 217, 255, 0.05) 25%, rgba(0, 217, 255, 0.05) 26%, transparent 27%, transparent 74%, rgba(0, 217, 255, 0.05) 75%, rgba(0, 217, 255, 0.05) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(0, 217, 255, 0.05) 25%, rgba(0, 217, 255, 0.05) 26%, transparent 27%, transparent 74%, rgba(0, 217, 255, 0.05) 75%, rgba(0, 217, 255, 0.05) 76%, transparent 77%, transparent);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.5;
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .header {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            animation: slideInLeft 0.8s ease-out;
+        }
+
+        .title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--primary);
+            text-shadow: 0 0 20px rgba(0, 217, 255, 0.5);
+            letter-spacing: 3px;
+        }
+
+        .timer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 18px;
+            color: var(--secondary);
+            font-weight: bold;
+            text-shadow: 0 0 15px rgba(255, 0, 110, 0.5);
+            z-index: 10;
+        }
+
+        .progress-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--tertiary));
+            transition: width 0.3s ease;
+            z-index: 10;
+        }
+
+        .game-board {
+            background: rgba(26, 31, 58, 0.9);
+            border: 2px solid var(--primary);
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 
+                0 0 30px rgba(0, 217, 255, 0.3),
+                inset 0 0 30px rgba(0, 217, 255, 0.05);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .game-board::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .game-board::-webkit-scrollbar-track {
+            background: rgba(0, 217, 255, 0.05);
+        }
+
+        .game-board::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        .level-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28px;
+            color: var(--primary);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .level-description {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .puzzle-container {
+            margin-bottom: 30px;
+        }
+
+        .puzzle-item {
+            background: rgba(157, 78, 221, 0.1);
+            border: 2px solid var(--tertiary);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .puzzle-item:hover {
+            background: rgba(157, 78, 221, 0.2);
+            box-shadow: 0 0 20px rgba(157, 78, 221, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .puzzle-item.selected {
+            background: rgba(0, 217, 255, 0.2);
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.4);
+        }
+
+        .puzzle-item.correct {
+            background: rgba(58, 134, 255, 0.2);
+            border-color: var(--success);
+            box-shadow: 0 0 20px rgba(58, 134, 255, 0.4);
+        }
+
+        .puzzle-item.incorrect {
+            background: rgba(251, 86, 7, 0.2);
+            border-color: var(--warning);
+            box-shadow: 0 0 20px rgba(251, 86, 7, 0.4);
+        }
+
+        .item-label {
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+
+        .item-content {
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            color: var(--dark-bg);
+            padding: 12px 30px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 217, 255, 0.3);
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 217, 255, 0.5);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .hint-button {
+            background: linear-gradient(135deg, var(--tertiary), var(--secondary));
+            box-shadow: 0 4px 15px rgba(157, 78, 221, 0.3);
+        }
+
+        .hint-button:hover {
+            box-shadow: 0 6px 25px rgba(157, 78, 221, 0.5);
+        }
+
+        .hint-box {
+            background: rgba(157, 78, 221, 0.15);
+            border-left: 4px solid var(--tertiary);
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+            display: none;
+            animation: slideInUp 0.3s ease-out;
+        }
+
+        .hint-box.show {
+            display: block;
+        }
+
+        .hint-title {
+            color: var(--tertiary);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .hint-text {
+            color: var(--text-secondary);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+            animation: slideInUp 0.3s ease-out;
+        }
+
+        .feedback.show {
+            display: block;
+        }
+
+        .feedback.success {
+            background: rgba(58, 134, 255, 0.2);
+            border: 2px solid var(--success);
+            color: var(--success);
+        }
+
+        .feedback.error {
+            background: rgba(251, 86, 7, 0.2);
+            border: 2px solid var(--warning);
+            color: var(--warning);
+        }
+
+        .start-screen {
+            text-align: center;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .start-screen h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 48px;
+            color: var(--primary);
+            margin-bottom: 20px;
+            text-shadow: 0 0 30px rgba(0, 217, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .start-screen p {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+            line-height: 1.8;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .objectives {
+            text-align: left;
+            background: rgba(0, 217, 255, 0.1);
+            border: 2px solid var(--primary);
+            padding: 25px;
+            border-radius: 10px;
+            margin: 25px 0;
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.2);
+        }
+
+        .objectives h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .objectives li {
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .win-screen {
+            text-align: center;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .win-screen h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 48px;
+            color: var(--success);
+            margin-bottom: 20px;
+            text-shadow: 0 0 40px rgba(58, 134, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .stats {
+            background: rgba(58, 134, 255, 0.15);
+            border: 2px solid var(--success);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 0 25px rgba(58, 134, 255, 0.3);
+        }
+
+        .stat-item {
+            color: var(--text-primary);
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        .stat-label {
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        .learning-recap {
+            background: rgba(0, 217, 255, 0.1);
+            border: 2px solid var(--primary);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .learning-recap h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .learning-recap li {
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                transform: translateX(-30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* MOBILE OPTIMIZATIONS */
+        @media (max-width: 768px) {
+            body {
+                overflow-y: auto;
+            }
+
+            .container {
+                padding: 10px;
+                justify-content: flex-start;
+                padding-top: 100px;
+            }
+
+            .header {
+                top: 10px;
+                left: 10px;
+                right: 10px;
+            }
+
+            .title {
+                font-size: 18px;
+                letter-spacing: 2px;
+            }
+
+            .timer {
+                top: 10px;
+                right: 10px;
+                font-size: 14px;
+            }
+
+            .game-board {
+                max-width: 100%;
+                padding: 20px;
+                margin-bottom: 20px;
+                max-height: none;
+                border-radius: 10px;
+            }
+
+            .level-title {
+                font-size: 20px;
+                letter-spacing: 1px;
+                margin-bottom: 15px;
+            }
+
+            .level-description {
+                font-size: 13px;
+                margin-bottom: 15px;
+                line-height: 1.5;
+            }
+
+            .puzzle-item {
+                padding: 15px;
+                margin-bottom: 12px;
+                border-radius: 8px;
+            }
+
+            .item-label {
+                font-size: 13px;
+                margin-bottom: 8px;
+            }
+
+            .item-content {
+                font-size: 12px;
+                line-height: 1.4;
+            }
+
+            .button-group {
+                flex-direction: column;
+                gap: 10px;
+                margin-top: 20px;
+            }
+
+            button {
+                width: 100%;
+                padding: 15px 20px;
+                font-size: 13px;
+                letter-spacing: 0.5px;
+                min-height: 48px;
+                border-radius: 8px;
+            }
+
+            .hint-box {
+                padding: 12px;
+                margin-top: 15px;
+                border-left: 3px solid var(--tertiary);
+            }
+
+            .hint-title {
+                font-size: 12px;
+                margin-bottom: 8px;
+            }
+
+            .hint-text {
+                font-size: 12px;
+                line-height: 1.4;
+            }
+
+            .feedback {
+                margin-top: 15px;
+                padding: 12px;
+                font-size: 13px;
+            }
+
+            .start-screen h1 {
+                font-size: 32px;
+                letter-spacing: 2px;
+                margin-bottom: 15px;
+            }
+
+            .start-screen p {
+                font-size: 13px;
+                margin-bottom: 12px;
+                line-height: 1.6;
+            }
+
+            .objectives {
+                padding: 15px;
+                margin: 15px 0;
+                border-radius: 8px;
+            }
+
+            .objectives h3 {
+                font-size: 14px;
+                margin-bottom: 10px;
+            }
+
+            .objectives li {
+                font-size: 12px;
+                margin-bottom: 8px;
+                line-height: 1.5;
+            }
+
+            .win-screen h1 {
+                font-size: 32px;
+                letter-spacing: 2px;
+                margin-bottom: 15px;
+            }
+
+            .stats {
+                padding: 15px;
+                margin: 15px 0;
+                border-radius: 8px;
+            }
+
+            .stat-item {
+                font-size: 13px;
+                margin: 8px 0;
+            }
+
+            .learning-recap {
+                padding: 15px;
+                margin: 15px 0;
+                border-radius: 8px;
+            }
+
+            .learning-recap h3 {
+                font-size: 14px;
+                margin-bottom: 10px;
+            }
+
+            .learning-recap li {
+                font-size: 12px;
+                margin-bottom: 6px;
+                line-height: 1.4;
+            }
+        }
+
+        /* SMALL PHONE OPTIMIZATIONS (max-width: 480px) */
+        @media (max-width: 480px) {
+            .container {
+                padding-top: 90px;
+            }
+
+            .title {
+                font-size: 16px;
+                letter-spacing: 1px;
+            }
+
+            .timer {
+                font-size: 12px;
+            }
+
+            .game-board {
+                padding: 15px;
+            }
+
+            .level-title {
+                font-size: 18px;
+            }
+
+            .level-description {
+                font-size: 12px;
+            }
+
+            .puzzle-item {
+                padding: 12px;
+                margin-bottom: 10px;
+            }
+
+            button {
+                padding: 13px 15px;
+                font-size: 12px;
+            }
+
+            .start-screen h1 {
+                font-size: 26px;
+            }
+
+            .start-screen p {
+                font-size: 12px;
+            }
+
+            .win-screen h1 {
+                font-size: 26px;
+            }
+        }
+
+        /* LANDSCAPE MODE */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .container {
+                padding-top: 70px;
+            }
+
+            .game-board {
+                max-height: 70vh;
+                padding: 15px;
+            }
+
+            .level-description {
+                font-size: 12px;
+                margin-bottom: 10px;
+            }
+
+            button {
+                padding: 10px 15px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">🔓 PHARMA ESCAPE ROOM</div>
+        </div>
+
+        <div class="timer hidden" id="timer">Time: <span id="timeDisplay">10:00</span></div>
+
+        <div class="game-board" id="gameBoard">
+            <!-- Content will be dynamically inserted -->
+        </div>
+
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <script>
+        // Game Configuration
+        const gameConfig = {
+            timeLimit: 600, // 10 minutes in seconds
+            levels: [
+                {
+                    id: 1,
+                    title: "ROOM 1: AGONISTS vs ANTAGONISTS",
+                    description: "Your first patient needs medication. Identify whether each drug is an agonist or antagonist to solve this puzzle.",
+                    objective: "Understand the difference between agonists (activate receptors) and antagonists (block receptors)",
+                    puzzles: [
+                        {
+                            question: "Epinephrine in shock treatment",
+                            options: [
+                                { text: "Agonist - activates α & β-adrenergic receptors", correct: true },
+                                { text: "Antagonist - blocks adrenergic receptors", correct: false }
+                            ],
+                            hint: "Think about what epinephrine does: does it activate or block receptors?"
+                        },
+                        {
+                            question: "Propranolol in hypertension",
+                            options: [
+                                { text: "Agonist - activates β-adrenergic receptors", correct: false },
+                                { text: "Antagonist - blocks β-adrenergic receptors", correct: true }
+                            ],
+                            hint: "Propranolol is a beta-blocker. Does it activate or inhibit?"
+                        },
+                        {
+                            question: "Morphine in pain management",
+                            options: [
+                                { text: "Agonist - activates opioid receptors", correct: true },
+                                { text: "Antagonist - blocks opioid receptors", correct: false }
+                            ],
+                            hint: "Morphine produces pain relief by activating opioid receptors. What type is that?"
+                        }
+                    ]
+                },
+                {
+                    id: 2,
+                    title: "ROOM 2: DRUG-DISEASE MATCHING",
+                    description: "Match each disease to the most appropriate drug. Understanding target proteins and therapeutic indications is critical.",
+                    objective: "Match target proteins to appropriate drugs and therapeutic indications",
+                    puzzles: [
+                        {
+                            question: "Asthma (needs bronchodilation)",
+                            options: [
+                                { text: "Albuterol - β2-adrenergic agonist (relaxes airway smooth muscle)", correct: true },
+                                { text: "Atenolol - β1-selective antagonist (slows heart rate)", correct: false },
+                                { text: "Lisinopril - ACE inhibitor (reduces blood pressure)", correct: false }
+                            ],
+                            hint: "Which drug relaxes airway muscles? Look for agonists of β2-adrenergic receptors."
+                        },
+                        {
+                            question: "Type 2 Diabetes (needs glucose control)",
+                            options: [
+                                { text: "Metformin - reduces hepatic glucose production", correct: true },
+                                { text: "Propranolol - β-blocker", correct: false },
+                                { text: "Omeprazole - proton pump inhibitor", correct: false }
+                            ],
+                            hint: "This drug increases insulin sensitivity and reduces glucose. What class controls blood sugar?"
+                        },
+                        {
+                            question: "Major Depression (needs serotonin elevation)",
+                            options: [
+                                { text: "Sertraline - SERT inhibitor (blocks serotonin reuptake)", correct: true },
+                                { text: "Diphenhydramine - H1 antagonist (antihistamine)", correct: false },
+                                { text: "Ibuprofen - COX inhibitor", correct: false }
+                            ],
+                            hint: "SSRIs prevent reuptake of serotonin. Which drug does this?"
+                        }
+                    ]
+                },
+                {
+                    id: 3,
+                    title: "ROOM 3: MECHANISM OF ACTION",
+                    description: "Explain the mechanism of action. Understand how drugs interact with their targets.",
+                    objective: "Explain the mechanism of action at target protein",
+                    puzzles: [
+                        {
+                            question: "How does lisinopril lower blood pressure?",
+                            options: [
+                                { text: "Blocks ACE enzyme → ↓ Angiotensin II → ↓ vasoconstriction → ↓ BP", correct: true },
+                                { text: "Directly relaxes vascular smooth muscle", correct: false },
+                                { text: "Increases sodium excretion via kidneys", correct: false }
+                            ],
+                            hint: "ACE inhibitors work by blocking an enzyme. Trace: enzyme blocking → hormone decrease → vessel effect → BP effect"
+                        },
+                        {
+                            question: "How does omeprazole reduce acid reflux?",
+                            options: [
+                                { text: "Inhibits proton pump in gastric parietal cells → ↓ H+ secretion → ↑ pH", correct: true },
+                                { text: "Neutralizes stomach acid chemically", correct: false },
+                                { text: "Increases mucus layer in stomach", correct: false }
+                            ],
+                            hint: "Think about what pumps acid into the stomach. What does omeprazole inhibit?"
+                        }
+                    ]
+                },
+                {
+                    id: 4,
+                    title: "ROOM 4: ADVERSE EFFECTS PREDICTION",
+                    description: "Predict adverse effects based on target protein and drug mechanism. Safety is paramount!",
+                    objective: "Predict key adverse effects from target and drug class",
+                    puzzles: [
+                        {
+                            question: "What's a major adverse effect of ACE inhibitors like lisinopril?",
+                            options: [
+                                { text: "Persistent dry cough (accumulation of bradykinin in lungs)", correct: true },
+                                { text: "Severe hypertension spike", correct: false },
+                                { text: "Increased heart rate", correct: false }
+                            ],
+                            hint: "ACE breaks down bradykinin. If ACE is blocked, bradykinin accumulates. Where does it affect?"
+                        },
+                        {
+                            question: "What adverse effect is common with β-blockers like propranolol?",
+                            options: [
+                                { text: "Fatigue & bradycardia (reduced β1 activity in heart)", correct: true },
+                                { text: "Tachycardia and anxiety", correct: false },
+                                { text: "Severe hypertension", correct: false }
+                            ],
+                            hint: "β1 receptors are in the heart. What happens when they're blocked?"
+                        },
+                        {
+                            question: "SSRIs like sertraline can cause which adverse effect?",
+                            options: [
+                                { text: "Sexual dysfunction (serotonin ↓ dopamine in mesolimbic pathway)", correct: true },
+                                { text: "Severe hypertension", correct: false },
+                                { text: "Tachycardia", correct: false }
+                            ],
+                            hint: "High serotonin can suppress dopamine in certain brain pathways. What function does dopamine regulate?"
+                        }
+                    ]
+                },
+                {
+                    id: 5,
+                    title: "ROOM 5: DRUG EFFICACY COMPARISON",
+                    description: "Compare efficacy of drugs within the same therapeutic class. Choosing the best option requires critical thinking.",
+                    objective: "Compare efficacy of drugs for the same disease category",
+                    puzzles: [
+                        {
+                            question: "For severe hypertension, which combination is most effective?",
+                            options: [
+                                { text: "ACE inhibitor + Thiazide diuretic (synergistic BP reduction)", correct: true },
+                                { text: "ACE inhibitor alone (adequate for most)", correct: false },
+                                { text: "Two ACE inhibitors together", correct: false }
+                            ],
+                            hint: "Different mechanisms can work together. ACE inhibitors target the RAAS; what does a diuretic do?"
+                        },
+                        {
+                            question: "For Type 2 diabetes management, why prefer metformin first-line?",
+                            options: [
+                                { text: "Better glycemic control, weight neutral/loss, cardiovascular benefits, low hypoglycemia risk", correct: true },
+                                { text: "It's cheaper than all alternatives", correct: false },
+                                { text: "It has fewer side effects than sulfonylureas", correct: false }
+                            ],
+                            hint: "Consider efficacy, weight effects, and safety profile. Compare metformin to sulfonylureas."
+                        }
+                    ]
+                },
+                {
+                    id: 6,
+                    title: "ROOM 6: DRUG DESIGN STRATEGIES",
+                    description: "Demonstrate understanding of rational drug design principles. Engineering molecules for optimal therapeutic benefit.",
+                    objective: "Comprehend strategies of drug design",
+                    puzzles: [
+                        {
+                            question: "Why are β1-selective agonists (like dobutamine) preferred over non-selective β-agonists in heart failure?",
+                            options: [
+                                { text: "Selectivity ↑ cardiac contractility while ↓ β2-mediated vasodilation side effects", correct: true },
+                                { text: "Non-selective agonists don't work", correct: false },
+                                { text: "They're easier to synthesize", correct: false }
+                            ],
+                            hint: "Selective drugs target specific receptor subtypes. β1 is cardiac; β2 is vascular. Why avoid β2 activation?"
+                        },
+                        {
+                            question: "Prodrugs are designed to improve which aspect?",
+                            options: [
+                                { text: "Bioavailability, tissue penetration, & reduced toxicity via activation by metabolism", correct: true },
+                                { text: "Shelf life only", correct: false },
+                                { text: "To make drugs taste better", correct: false }
+                            ],
+                            hint: "Prodrugs are inactive until metabolized. What advantage does this give?"
+                        },
+                        {
+                            question: "Structure-Activity Relationship (SAR) studies help identify:",
+                            options: [
+                                { text: "Critical chemical groups for potency & selectivity, guiding future analogs", correct: true },
+                                { text: "Only the manufacturing cost", correct: false },
+                                { text: "How to market drugs better", correct: false }
+                            ],
+                            hint: "SAR looks at how small molecular changes affect drug activity. What does this enable?"
+                        }
+                    ]
+                }
+            ]
+        };
+
+        // Game State
+        let gameState = {
+            currentLevel: 0,
+            completedLevels: [],
+            currentPuzzleIndex: 0,
+            selectedAnswers: {},
+            hintsUsed: 0,
+            startTime: Date.now(),
+            gameActive: false,
+            score: 0
+        };
+
+        // Initialize Game
+        function initGame() {
+            showStartScreen();
+            setupAudio();
+        }
+
+        function setupAudio() {
+            // Create background music using Web Audio API
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            oscillator.frequency.value = 80;
+            oscillator.type = 'sine';
+            
+            // Start with muted audio (can be toggled by user if needed)
+            // This creates an ambient background tone
+            oscillator.start();
+        }
+
+        function showStartScreen() {
+            const html = `
+                <div class="start-screen">
+                    <h1>PHARMA ESCAPE ROOM</h1>
+                    <p>Master the escape, own the thrill by solving pharmacology puzzles</p>
+                    <div class="objectives">
+                        <h3>🎓 LEARNING OBJECTIVES</h3>
+                        <ul>
+                            <li><strong>Define & Differentiate:</strong> Agonists (activate receptors) vs Antagonists (block receptors)</li>
+                            <li><strong>Match & Indicate:</strong> Drug targets to therapeutic indications</li>
+                            <li><strong>Explain MoA:</strong> Mechanism of action at molecular level</li>
+                            <li><strong>Predict AEs:</strong> Adverse effects from target interaction</li>
+                            <li><strong>Compare Efficacy:</strong> Drug effectiveness within therapeutic classes</li>
+                            <li><strong>Design Strategy:</strong> Rational drug design principles</li>
+                        </ul>
+                    </div>
+                    <p style="color: var(--primary); font-weight: bold; margin: 20px 0;">⏱️ Complete all 6 rooms in 10 minutes!</p>
+                    <button onclick="startGame()">START THE CHALLENGE NOW</button>
+                </div>
+            `;
+            document.getElementById('gameBoard').innerHTML = html;
+        }
+
+        function startGame() {
+            gameState.gameActive = true;
+            gameState.startTime = Date.now();
+            showLevel();
+            startTimer();
+            updateProgressBar();
+        }
+
+        function showLevel() {
+            const level = gameConfig.levels[gameState.currentLevel];
+            
+            let html = `
+                <div class="level-title">${level.title}</div>
+                <div class="level-description">${level.description}</div>
+                <div class="level-description" style="color: var(--primary); border-left: 3px solid var(--primary); padding-left: 15px; margin-bottom: 25px;">
+                    <strong>🎯 Objective:</strong> ${level.objective}
+                </div>
+                <div class="puzzle-container">
+            `;
+
+            level.puzzles.forEach((puzzle, index) => {
+                html += `<div class="puzzle-item" onclick="selectPuzzle(${index})">
+                    <div class="item-label">▶ ${puzzle.question}</div>
+                </div>`;
+            });
+
+            html += `
+                </div>
+                <div class="button-group">
+                    <button class="hint-button" onclick="showHint()">💡 HINT</button>
+                    <button onclick="checkAnswers()">✓ VERIFY ANSWERS</button>
+                </div>
+                <div class="hint-box" id="hintBox">
+                    <div class="hint-title">💡 HINT</div>
+                    <div class="hint-text" id="hintText"></div>
+                </div>
+                <div class="feedback" id="feedback"></div>
+            `;
+
+            document.getElementById('gameBoard').innerHTML = html;
+            showPuzzleDetail(0);
+        }
+
+        function showPuzzleDetail(index) {
+            const level = gameConfig.levels[gameState.currentLevel];
+            const puzzle = level.puzzles[index];
+            gameState.currentPuzzleIndex = index;
+
+            let html = `
+                <div class="level-title">${level.title}</div>
+                <div class="level-description">${level.description}</div>
+                <div class="puzzle-container">
+                    <div style="margin-bottom: 20px; padding: 20px; background: rgba(0, 217, 255, 0.1); border-left: 4px solid var(--primary); border-radius: 5px;">
+                        <div class="item-label" style="color: var(--primary); font-size: 16px;">QUESTION ${index + 1}/${level.puzzles.length}</div>
+                        <div class="item-content" style="color: var(--text-primary); margin-top: 10px; font-size: 15px; font-weight: bold;">${puzzle.question}</div>
+                    </div>
+            `;
+
+            puzzle.options.forEach((option, optionIndex) => {
+                const isSelected = gameState.selectedAnswers[index] === optionIndex;
+                const answeredClass = gameState.selectedAnswers.hasOwnProperty(index) ? (isSelected ? 'selected' : '') : '';
+                html += `
+                    <div class="puzzle-item ${answeredClass}" onclick="selectAnswer(${index}, ${optionIndex})">
+                        <div class="item-content">${option.text}</div>
+                    </div>
+                `;
+            });
+
+            html += `
+                </div>
+                <div class="button-group">
+                    <button class="hint-button" onclick="showHint()">💡 HINT</button>
+                    ${index > 0 ? `<button onclick="showPuzzleDetail(${index - 1})">← PREVIOUS</button>` : ''}
+                    ${index < level.puzzles.length - 1 ? `<button onclick="showPuzzleDetail(${index + 1})">NEXT →</button>` : ''}
+                    <button onclick="checkAnswers()">✓ VERIFY ALL ANSWERS</button>
+                </div>
+                <div class="hint-box" id="hintBox">
+                    <div class="hint-title">💡 HINT FOR QUESTION ${index + 1}</div>
+                    <div class="hint-text" id="hintText"></div>
+                </div>
+                <div class="feedback" id="feedback"></div>
+            `;
+
+            document.getElementById('gameBoard').innerHTML = html;
+        }
+
+        function selectAnswer(puzzleIndex, optionIndex) {
+            gameState.selectedAnswers[puzzleIndex] = optionIndex;
+            showPuzzleDetail(puzzleIndex);
+        }
+
+        function showHint() {
+            const level = gameConfig.levels[gameState.currentLevel];
+            const puzzle = level.puzzles[gameState.currentPuzzleIndex];
+            const hintBox = document.getElementById('hintBox');
+            const hintText = document.getElementById('hintText');
+            
+            hintText.textContent = puzzle.hint;
+            hintBox.classList.add('show');
+            gameState.hintsUsed++;
+        }
+
+        function checkAnswers() {
+            const level = gameConfig.levels[gameState.currentLevel];
+            let allCorrect = true;
+            let correctCount = 0;
+
+            level.puzzles.forEach((puzzle, index) => {
+                if (gameState.selectedAnswers[index] !== undefined) {
+                    if (puzzle.options[gameState.selectedAnswers[index]].correct) {
+                        correctCount++;
+                    } else {
+                        allCorrect = false;
+                    }
+                } else {
+                    allCorrect = false;
+                }
+            });
+
+            const feedback = document.getElementById('feedback');
+            feedback.classList.add('show');
+
+            if (allCorrect) {
+                feedback.classList.remove('error');
+                feedback.classList.add('success');
+                feedback.innerHTML = `✓ EXCELLENT! All answers correct. Moving to next room...`;
+                gameState.score += (level.puzzles.length * 10);
+                gameState.completedLevels.push(gameState.currentLevel);
+                
+                setTimeout(() => {
+                    if (gameState.currentLevel < gameConfig.levels.length - 1) {
+                        gameState.currentLevel++;
+                        gameState.currentPuzzleIndex = 0;
+                        gameState.selectedAnswers = {};
+                        gameState.hintsUsed = 0;
+                        showLevel();
+                    } else {
+                        endGame();
+                    }
+                }, 2000);
+            } else {
+                feedback.classList.remove('success');
+                feedback.classList.add('error');
+                feedback.innerHTML = `✗ Not quite right. ${correctCount}/${level.puzzles.length} correct. Review and try again!`;
+            }
+        }
+
+        function startTimer() {
+            setInterval(() => {
+                if (!gameState.gameActive) return;
+
+                const elapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
+                const remaining = Math.max(0, gameConfig.timeLimit - elapsed);
+                
+                const minutes = Math.floor(remaining / 60);
+                const seconds = remaining % 60;
+                const timeDisplay = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                
+                document.getElementById('timeDisplay').textContent = timeDisplay;
+                document.getElementById('timer').classList.remove('hidden');
+
+                if (remaining === 0) {
+                    gameState.gameActive = false;
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function updateProgressBar() {
+            const progress = (gameState.completedLevels.length / gameConfig.levels.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function endGame() {
+            gameState.gameActive = false;
+            showWinScreen();
+        }
+
+        function showWinScreen() {
+            const totalQuestions = gameConfig.levels.reduce((sum, level) => sum + level.puzzles.length, 0);
+            const completionPercentage = Math.round((gameState.completedLevels.length / gameConfig.levels.length) * 100);
+            
+            let html = `
+                <div class="win-screen">
+                    <h1>🧬 MISSION COMPLETE!</h1>
+                    <p style="color: var(--text-secondary); margin: 15px 0;">Escape Room Challenge Completed Successfully</p>
+                    
+                    <div class="stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Rooms Completed:</span> ${gameState.completedLevels.length}/6
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Completion:</span> ${completionPercentage}%
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Knowledge Score:</span> ${gameState.score} points
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Hints Used:</span> ${gameState.hintsUsed}
+                        </div>
+                    </div>
+
+                    <div class="learning-recap">
+                        <h3>📚 CONCEPTS MASTERED</h3>
+                        <ul>
+                            <li>✓ <strong>Agonist vs Antagonist:</strong> You can now distinguish receptor activators from blockers and predict their effects</li>
+                            <li>✓ <strong>Drug-Target Matching:</strong> You understand how to select appropriate drugs for specific diseases</li>
+                            <li>✓ <strong>Mechanism of Action:</strong> You can explain how drugs work at the molecular level</li>
+                            <li>✓ <strong>Adverse Effects:</strong> You can predict side effects based on drug targets</li>
+                            <li>✓ <strong>Drug Efficacy:</strong> You understand how to compare and select optimal treatments</li>
+                            <li>✓ <strong>Drug Design:</strong> You comprehend rational strategies for creating better drugs</li>
+                        </ul>
+                    </div>
+
+                    <button onclick="initGame()">🔄 RESTART CHALLENGE</button>
+                </div>
+            `;
+            
+            document.getElementById('gameBoard').innerHTML = html;
+        }
+
+        // Start the game
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>
